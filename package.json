@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/jtremback/microstar-internal-chain/issues"
   },
-  "homepage": "https://github.com/jtremback/microstar-internal-chain"
+  "homepage": "https://github.com/jtremback/microstar-internal-chain",
+  "dependencies": {
+    "pull-stream": "^2.26.0"
+  }
 }

@@ -1,20 +1,17 @@
 'use strict';
 
-var krypt = require('krypt')
 var pull = require('pull-stream')
-var r = require('ramda')
+var mChain = require('../microstar-chain')
+var mCrypto = require('../microstar-crypto')
+var llibrarian = require('../level-librarian')
 
-var mChain = require('microstar-chain')
-
-module.exports = function (settings) {
-  return {
-    write: r.lPartial(write, settings),
-    read: r.lPartial(read, settings)
-  }
+module.exports = {
+  write: write,
+  writeOne: llibrarian.makeWriteOne(write),
+  read: read,
+  readOne: llibrarian.makeReadOne(read),
+  indexes: mChain.indexes
 }
-
-module.exports.write = write
-module.exports.read = read
 
 // settings = {
 //   crypto: JS,
@@ -25,48 +22,26 @@ module.exports.read = read
 // message = {
 //   content: JSON,
 //   type: String,
-//   feed_id: String
+//   chain_id: String
 // }
 
 function write (settings, callback) {
   return pull(
-    encryptContents(settings),
+    pull.asyncMap(function (message, callback) {
+      mCrypto.makeNonce(function (nonce) {
+        message.nonce = nonce
+        message.content = mCrypto.secretbox(message.content, nonce, settings.keys.secret_key, callback)
+      })
+    }),
     mChain.write(settings, callback)
   )
 }
 
-
 function read (settings, query, callback) {
   return pull(
     mChain.read(settings, query, callback),
-    decryptContents(settings)
-  )
-}
-
-function readOne (settings, query, callback) {
-  pull(
-    read(settings, query, callback),
-    pull.drain(function (data) {
-      callback(null, data)
-      return false
-    })
-  )
-}
-
-function encryptContents (settings) {
-  return pull(
-    pull.map(function (message) {
-      message.content = krypt.encrypt(message, settings.keys.symmetric)
-      return message
-    })
-  )
-}
-
-function decryptContents (settings) {
-  return pull(
-    pull.map(function (message) {
-      message.content = krypt.decrypt(message, settings.keys.symmetric)
-      return message
+    pull.asyncMap(function (message, callback) {
+      message.content = mCrypto.secretbox(message.content, message.nonce, settings.keys.secret_key, callback)
     })
   )
 }
