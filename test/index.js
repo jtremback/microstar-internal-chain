@@ -163,7 +163,7 @@ function tests (keys) {
     t.plan(2)
 
     pull(
-      mInternalChain.sequential(settings, settings.keys.publicKey, 'holiday-carols:2014'),
+      mInternalChain.sequential(settings, settings.keys.public_key, 'holiday-carols:2014'),
       pull.collect(function (err, arr) {
         if (err) { throw err }
         t.deepEqual(arr, [messages[0], messages[1], messages[2]], 'Sequential without supplied sequence')
@@ -171,7 +171,7 @@ function tests (keys) {
     )
 
     pull(
-      mInternalChain.sequential(settings, settings.keys.publicKey, 'holiday-carols:2014', 1),
+      mInternalChain.sequential(settings, settings.keys.public_key, 'holiday-carols:2014', 1),
       pull.collect(function (err, arr) {
         if (err) { throw err }
         t.deepEqual(arr, [messages[1], messages[2]], 'Sequential with supplied sequence')
