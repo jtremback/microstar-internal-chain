@@ -82,9 +82,9 @@ function decryptContent (settings) {
   )
 }
 
-function sequential (settings, pub_key, chain_id, sequence) {
+function sequential (settings, public_key, chain_id, sequence) {
   return pull(
-    mChain.sequential(settings, pub_key, chain_id, sequence),
+    mChain.sequential(settings, public_key, chain_id, sequence),
     decryptContent(settings)
   )
 }
