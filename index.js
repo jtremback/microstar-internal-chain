@@ -46,18 +46,38 @@ function read (settings, query, callback) {
 function encryptContent (settings) {
   return pull(
     pull.asyncMap(function (message, callback) {
-      mCrypto.makeNonce(function (err, nonce) {
-        message.nonce = nonce
-        message.content = mCrypto.secretbox(message.content, nonce, settings.keys.secret_key, callback)
+      mCrypto.hash(message.chain_id + message.sequence, function (err, hash) {
+        if (err) { return callback(err) }
+        var nonce = hash.substring(0, 32)
+      debugger
+        mCrypto.secretbox(message.content, nonce, settings.keys.secret_key, function (err, cipher) {
+          message.content = cipher
+          return callback(err, message)
+        })
       })
     })
   )
 }
 
+
 function decryptContent (settings) {
   return pull(
     pull.asyncMap(function (message, callback) {
-      message.content = mCrypto.secretbox(message.content, message.nonce, settings.keys.secret_key, callback)
+      // mCrypto.secretbox.open(message.content.cipher, message.content.nonce, settings.keys.secret_key, function (err, content) {
+      //   message.content = content
+      //   return callback(err, message)
+      // })
+
+      mCrypto.hash(message.chain_id + message.sequence, function (err, hash) {
+        if (err) { return callback(err) }
+        var nonce = hash.substring(0, 32)
+      debugger
+        mCrypto.secretbox.open(message.content, nonce, settings.keys.secret_key, function (err, content) {
+          message.content = content
+          return callback(err, message)
+        })
+      })
+
     })
   )
 }
