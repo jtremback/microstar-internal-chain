@@ -29,10 +29,14 @@ module.exports = {
 //   chain_id: String
 // }
 
+// Formats messages and then writes them to db
 function write (settings, callback) {
   return pull(
+    mChain.createSequences(settings),
     encryptContent(settings),
-    mChain.write(settings, callback)
+    mChain.createEnvelopes(settings),
+    mChain.createDocs(settings),
+    llibrarian.write(settings, callback)
   )
 }
 
@@ -44,42 +48,33 @@ function read (settings, query, callback) {
 }
 
 function encryptContent (settings) {
-  return pull(
-    pull.asyncMap(function (message, callback) {
-      mCrypto.hash(message.chain_id + message.sequence, function (err, hash) {
-        if (err) { return callback(err) }
-        var nonce = hash.substring(0, 32)
-      debugger
-        mCrypto.secretbox(message.content, nonce, settings.keys.secret_key, function (err, cipher) {
-          message.content = cipher
-          return callback(err, message)
-        })
+  return pull.asyncMap(function (message, callback) {
+    mCrypto.hash(message.chain_id + message.sequence, function (err, hash) {
+      if (err) { return callback(err) }
+      // 24 byte nonce from a 32 char string? this is really fishy. fix later
+      var nonce = hash.substring(0, 32)
+
+      mCrypto.secretbox(message.content, nonce, settings.keys.secret_key, function (err, cipher) {
+        message.content = cipher
+        return callback(err, message)
       })
     })
-  )
+  })
 }
 
-
 function decryptContent (settings) {
-  return pull(
-    pull.asyncMap(function (message, callback) {
-      // mCrypto.secretbox.open(message.content.cipher, message.content.nonce, settings.keys.secret_key, function (err, content) {
-      //   message.content = content
-      //   return callback(err, message)
-      // })
+  return pull.asyncMap(function (message, callback) {
+    mCrypto.hash(message.chain_id + message.sequence, function (err, hash) {
+      if (err) { return callback(err) }
+      // 24 byte nonce from a 32 char string? this is really fishy. fix later
+      var nonce = hash.substring(0, 32)
 
-      mCrypto.hash(message.chain_id + message.sequence, function (err, hash) {
-        if (err) { return callback(err) }
-        var nonce = hash.substring(0, 32)
-      debugger
-        mCrypto.secretbox.open(message.content, nonce, settings.keys.secret_key, function (err, content) {
-          message.content = content
-          return callback(err, message)
-        })
+      mCrypto.secretbox.open(message.content, nonce, settings.keys.secret_key, function (err, content) {
+        message.content = content
+        return callback(err, message)
       })
-
     })
-  )
+  })
 }
 
 function sequential (settings, public_key, chain_id, sequence) {

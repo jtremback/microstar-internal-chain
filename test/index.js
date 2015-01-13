@@ -2,13 +2,11 @@
 
 var test = require('tape')
 var mInternalChain = require('../')
+var mChain = require('../../microstar-chain')
 var mCrypto = require('../../microstar-crypto')
 var level = require('level-test')()
 var pull = require('pull-stream')
-var pl = require('pull-level')
 
-
-var dbContents
 var db1 = level('./test1.db', { valueEncoding: 'json' })
 
 mCrypto.keys('h4dfDIR+i3JfCw1T2jKr/SS/PJttebGfMMGwBvhOzS4=', function (err, keys) {
@@ -40,74 +38,79 @@ function tests (keys) {
     chain_id: 'holiday-carols:2014'
   }]
 
-  var messages = [{
+  var encrypted_messages = [{
+    chain_id: 'holiday-carols:2014',
+    content: 'pqlIp4ba4obeTe+jRdOHyk9K',
+    previous: null,
+    public_key: 'N3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=',
+    sequence: 0,
+    signature: 'a1lBGmXRpYkzQPir+pfW3tlE6ysHruzu0b0T4Xk1ZwkQ1iol4Tm+0HFVaOvdGFZ3zCqJ07MhmhcZqurQXD+BDQ==',
+    timestamp: 1418804138168,
+    type: 'holiday-carols:syllable'
+  }, {
+    chain_id: 'holiday-carols:2014',
+    content: 'DZqHwGaCCoPWkHiTmEK4OVpj',
+    previous: '12U7+dILx7WWrYJ43YLMHx3loTK0ErFsaYco2DVade9kLVDbsiHhh/ybB9ZIuLnC0qZHvUrWh5ydZ0JBSFlKOw==',
+    public_key: 'N3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=',
+    sequence: 1,
+    signature: 'xDARDYqDQuUnxOS8GxFGuY4pI7egyDI/zysW+/pqBA1r/GpMJXPpHv0eYP6ssTR3KFQGeI7N7oEwPiEqdOeVBw==',
+    timestamp: 1418804138169,
+    type: 'holiday-carols:syllable'
+  }, {
+    chain_id: 'holiday-carols:2014',
+    content: 'UdR3Wq6Cve8nA6JwTCDbAMJioA==',
+    previous: 'C6b46Tlkjfxi9+/16ESki8rfIA4FQpQ20jeVbITDxpsBKtvnf6m32zlLrALlByr9q0N91npxTAAhs7+pcW6Qwg==',
+    public_key: 'N3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=',
+    sequence: 2,
+    signature: 'KnG1yiJc4jNkrOfx++G9OBx7UTP6pd+O4/qvwdZskmOR98Sso37pxunzgMkhbOzBDJ0HQhXKjFFBfiWrfczSBQ==',
+    timestamp: 1418804138170,
+    type: 'holiday-carols:syllable'
+  }]
+
+  var decrypted_messages = [{
     chain_id: 'holiday-carols:2014',
     content: 'Fa',
     previous: null,
     public_key: 'N3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=',
     sequence: 0,
-    signature: 'Cs8s0zZgqE/Tp+DCFDXuMYA6mNUtPTFGf//5rENPCx37g3L7BFhz0pBJ06GFK5E1i3C6o5H9BgX/Ltppf5EFBQ==',
+    signature: 'a1lBGmXRpYkzQPir+pfW3tlE6ysHruzu0b0T4Xk1ZwkQ1iol4Tm+0HFVaOvdGFZ3zCqJ07MhmhcZqurQXD+BDQ==',
     timestamp: 1418804138168,
     type: 'holiday-carols:syllable'
   }, {
     chain_id: 'holiday-carols:2014',
     content: 'La',
-    previous: 'LWTQmsJ1E9fu+gSXDM03ckBXieL9/K8Jl2claIRcC6FFX5WYd1ojDsgo6KK1GafCinq2lAQlsIeVtU4RSpYL1w==',
+    previous: '12U7+dILx7WWrYJ43YLMHx3loTK0ErFsaYco2DVade9kLVDbsiHhh/ybB9ZIuLnC0qZHvUrWh5ydZ0JBSFlKOw==',
     public_key: 'N3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=',
     sequence: 1,
-    signature: '/v1TqoggUpzuFx5sJ5jirlQsBOpGQBb1DJwP4ue1S5LzqKXIvZvlFe/WOLjyQTKXkqw9uQo2NH7eJPq4E7HbAQ==',
+    signature: 'xDARDYqDQuUnxOS8GxFGuY4pI7egyDI/zysW+/pqBA1r/GpMJXPpHv0eYP6ssTR3KFQGeI7N7oEwPiEqdOeVBw==',
     timestamp: 1418804138169,
     type: 'holiday-carols:syllable'
   }, {
     chain_id: 'holiday-carols:2014',
     content: 'Laa',
-    previous: '31+k7zPSRtH22OZxA4RXQRNQJ42gay0LNcGSUt19JhS/RElqw/O28+eRUQQdKJvSiQNjU1I5hyHf9OG7I1Np3g==',
+    previous: 'C6b46Tlkjfxi9+/16ESki8rfIA4FQpQ20jeVbITDxpsBKtvnf6m32zlLrALlByr9q0N91npxTAAhs7+pcW6Qwg==',
     public_key: 'N3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=',
     sequence: 2,
-    signature: '+2r2xOcwEsP/h2inzDYx3OX2jk+03Zjnhp7pdagNcDFAE/fhdTX4Zmdx+Vi+divPumjIvHQYNSzy4qBI9c4dAQ==',
+    signature: 'KnG1yiJc4jNkrOfx++G9OBx7UTP6pd+O4/qvwdZskmOR98Sso37pxunzgMkhbOzBDJ0HQhXKjFFBfiWrfczSBQ==',
     timestamp: 1418804138170,
     type: 'holiday-carols:syllable'
   }]
 
-  test('write', function (t) {
 
+  test('write', function (t) {
     pull(
       pull.values(raw_messages),
       mInternalChain.write(settings, function (err) {
         t.error(err)
 
         pull(
-          mInternalChain.sequential(settings, settings.keys.public_key, 'holiday-carols:2014'),
+          mChain.sequential(settings, settings.keys.public_key, 'holiday-carols:2014'),
           pull.collect(function (err, arr) {
             t.error(err)
-            t.deepEqual(arr, messages, '.write(db, indexes)')
+            t.deepEqual(arr, encrypted_messages, '.write(db, indexes)')
             t.end()
           })
         )
-      })
-    )
-
-  })
-
-  test('validate', function (t) {
-    t.plan(2)
-
-
-    pull(
-      pull.values([messages[1], messages[2]]),
-      mInternalChain.validate(settings, messages[0]),
-      pull.collect(function (err, arr) {
-        if (err) { throw err }
-        t.deepEqual(arr, [messages[1], messages[2]], 'Partial chain with supplied initial message.')
-      })
-    )
-
-    pull(
-      pull.values([messages[0], messages[1], messages[2]]),
-      mInternalChain.validate(settings),
-      pull.collect(function (err, arr) {
-        if (err) { throw err }
-        t.deepEqual(arr, [messages[0], messages[1], messages[2]], 'Partial chain without supplied initial message.')
       })
     )
   })
@@ -119,7 +122,7 @@ function tests (keys) {
       mInternalChain.sequential(settings, settings.keys.public_key, 'holiday-carols:2014'),
       pull.collect(function (err, arr) {
         if (err) { throw err }
-        t.deepEqual(arr, [messages[0], messages[1], messages[2]], 'Sequential without supplied sequence')
+        t.deepEqual(arr, [decrypted_messages[0], decrypted_messages[1], decrypted_messages[2]], 'Sequential without supplied sequence')
       })
     )
 
@@ -127,7 +130,29 @@ function tests (keys) {
       mInternalChain.sequential(settings, settings.keys.public_key, 'holiday-carols:2014', 1),
       pull.collect(function (err, arr) {
         if (err) { throw err }
-        t.deepEqual(arr, [messages[1], messages[2]], 'Sequential with supplied sequence')
+        t.deepEqual(arr, [decrypted_messages[1], decrypted_messages[2]], 'Sequential with supplied sequence')
+      })
+    )
+  })
+
+  test('validate', function (t) {
+    t.plan(2)
+
+    pull(
+      pull.values([encrypted_messages[1], encrypted_messages[2]]),
+      mInternalChain.validate(settings, encrypted_messages[0]),
+      pull.collect(function (err, arr) {
+        if (err) { throw err }
+        t.deepEqual(arr, [encrypted_messages[1], encrypted_messages[2]], 'Partial chain with supplied initial message.')
+      })
+    )
+
+    pull(
+      pull.values([encrypted_messages[0], encrypted_messages[1], encrypted_messages[2]]),
+      mInternalChain.validate(settings),
+      pull.collect(function (err, arr) {
+        if (err) { throw err }
+        t.deepEqual(arr, [encrypted_messages[0], encrypted_messages[1], encrypted_messages[2]], 'Partial chain without supplied initial message.')
       })
     )
   })
