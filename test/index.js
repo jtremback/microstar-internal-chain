@@ -6,6 +6,7 @@ var mChain = require('../../microstar-chain')
 var mCrypto = require('../../microstar-crypto')
 var level = require('level-test')()
 var pull = require('pull-stream')
+var async = require('async')
 
 var db1 = level('./test1.db', { valueEncoding: 'json' })
 
@@ -40,29 +41,29 @@ function tests (keys) {
 
   var encrypted_messages = [{
     chain_id: 'holiday-carols:2014',
-    content: 'pqlIp4ba4obeTe+jRdOHyk9K',
+    content: 'ADP1A0CFVa9sxCmeaUEW1SttYeA=',
     previous: null,
     public_key: 'N3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=',
     sequence: 0,
-    signature: 'a1lBGmXRpYkzQPir+pfW3tlE6ysHruzu0b0T4Xk1ZwkQ1iol4Tm+0HFVaOvdGFZ3zCqJ07MhmhcZqurQXD+BDQ==',
+    signature: 'l5z5Wr6fx+zKyZ3u+3wpfJs9d+IPJjBcjmycP7I9+JLyjBew32W3sEph4rASqHOawGTw861P07/e3lbAuEsIAw==',
     timestamp: 1418804138168,
     type: 'holiday-carols:syllable'
   }, {
     chain_id: 'holiday-carols:2014',
-    content: 'DZqHwGaCCoPWkHiTmEK4OVpj',
-    previous: '12U7+dILx7WWrYJ43YLMHx3loTK0ErFsaYco2DVade9kLVDbsiHhh/ybB9ZIuLnC0qZHvUrWh5ydZ0JBSFlKOw==',
+    content: 'NIRugXxD2RdLC5pZxGgQUjROOt4=',
+    previous: '7tnF9BOZCvP772uR1NWyLv9TQ2Z0T+32riey4gsoxu7U/dBVsrJfWSnrAH2A2WX6VKT1NEXmDow7V+WBS6rTFA==',
     public_key: 'N3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=',
     sequence: 1,
-    signature: 'xDARDYqDQuUnxOS8GxFGuY4pI7egyDI/zysW+/pqBA1r/GpMJXPpHv0eYP6ssTR3KFQGeI7N7oEwPiEqdOeVBw==',
+    signature: 'UVbFCY/La8WA45gsfiEQHPH9LhVQguj+7c3Ryhmh9DBpxshiEfWJxzksWZqV5dUBuVNgvseCkONeij+O/2p4Ag==',
     timestamp: 1418804138169,
     type: 'holiday-carols:syllable'
   }, {
     chain_id: 'holiday-carols:2014',
-    content: 'UdR3Wq6Cve8nA6JwTCDbAMJioA==',
-    previous: 'C6b46Tlkjfxi9+/16ESki8rfIA4FQpQ20jeVbITDxpsBKtvnf6m32zlLrALlByr9q0N91npxTAAhs7+pcW6Qwg==',
+    content: 'jUz99DHe7OGdSD1kcLIXB6xPoN4s',
+    previous: 'CIu7YG77MOSBCxfHWHKfhROwH77u4D4nWBOXoDnJZXz0X/Ne9QQursF92vr200byapCHclPawEOPFRyvH45mqw==',
     public_key: 'N3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=',
     sequence: 2,
-    signature: 'KnG1yiJc4jNkrOfx++G9OBx7UTP6pd+O4/qvwdZskmOR98Sso37pxunzgMkhbOzBDJ0HQhXKjFFBfiWrfczSBQ==',
+    signature: 'FPxqA5KBQmRfC3ARQYRvzPHGqeRB18jOLHJuSWFUC0PY5x/cDBHPkEZDs7bo4G3/xbaD25y//G7G4G4IKSPLBg==',
     timestamp: 1418804138170,
     type: 'holiday-carols:syllable'
   }]
@@ -73,46 +74,70 @@ function tests (keys) {
     previous: null,
     public_key: 'N3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=',
     sequence: 0,
-    signature: 'a1lBGmXRpYkzQPir+pfW3tlE6ysHruzu0b0T4Xk1ZwkQ1iol4Tm+0HFVaOvdGFZ3zCqJ07MhmhcZqurQXD+BDQ==',
+    signature: 'l5z5Wr6fx+zKyZ3u+3wpfJs9d+IPJjBcjmycP7I9+JLyjBew32W3sEph4rASqHOawGTw861P07/e3lbAuEsIAw==',
     timestamp: 1418804138168,
     type: 'holiday-carols:syllable'
   }, {
     chain_id: 'holiday-carols:2014',
     content: 'La',
-    previous: '12U7+dILx7WWrYJ43YLMHx3loTK0ErFsaYco2DVade9kLVDbsiHhh/ybB9ZIuLnC0qZHvUrWh5ydZ0JBSFlKOw==',
+    previous: '7tnF9BOZCvP772uR1NWyLv9TQ2Z0T+32riey4gsoxu7U/dBVsrJfWSnrAH2A2WX6VKT1NEXmDow7V+WBS6rTFA==',
     public_key: 'N3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=',
     sequence: 1,
-    signature: 'xDARDYqDQuUnxOS8GxFGuY4pI7egyDI/zysW+/pqBA1r/GpMJXPpHv0eYP6ssTR3KFQGeI7N7oEwPiEqdOeVBw==',
+    signature: 'UVbFCY/La8WA45gsfiEQHPH9LhVQguj+7c3Ryhmh9DBpxshiEfWJxzksWZqV5dUBuVNgvseCkONeij+O/2p4Ag==',
     timestamp: 1418804138169,
     type: 'holiday-carols:syllable'
   }, {
     chain_id: 'holiday-carols:2014',
     content: 'Laa',
-    previous: 'C6b46Tlkjfxi9+/16ESki8rfIA4FQpQ20jeVbITDxpsBKtvnf6m32zlLrALlByr9q0N91npxTAAhs7+pcW6Qwg==',
+    previous: 'CIu7YG77MOSBCxfHWHKfhROwH77u4D4nWBOXoDnJZXz0X/Ne9QQursF92vr200byapCHclPawEOPFRyvH45mqw==',
     public_key: 'N3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=',
     sequence: 2,
-    signature: 'KnG1yiJc4jNkrOfx++G9OBx7UTP6pd+O4/qvwdZskmOR98Sso37pxunzgMkhbOzBDJ0HQhXKjFFBfiWrfczSBQ==',
+    signature: 'FPxqA5KBQmRfC3ARQYRvzPHGqeRB18jOLHJuSWFUC0PY5x/cDBHPkEZDs7bo4G3/xbaD25y//G7G4G4IKSPLBg==',
     timestamp: 1418804138170,
     type: 'holiday-carols:syllable'
   }]
 
 
   test('write', function (t) {
-    pull(
-      pull.values(raw_messages),
-      mInternalChain.write(settings, function (err) {
-        t.error(err)
+    // pull(
+    //   pull.values(raw_messages),
+    //   mInternalChain.write(settings, function (err) {
+    //     t.error(err)
 
+    //     pull(
+    //       mChain.sequential(settings, settings.keys.public_key, 'holiday-carols:2014'),
+    //       pull.collect(function (err, arr) {
+    //         t.error(err)
+    //         t.deepEqual(arr, encrypted_messages, '.write(db, indexes)')
+    //         t.end()
+    //       })
+    //     )
+    //   })
+    // )
+
+    async.series([
+      function (callback) {
         pull(
-          mChain.sequential(settings, settings.keys.public_key, 'holiday-carols:2014'),
-          pull.collect(function (err, arr) {
-            t.error(err)
-            t.deepEqual(arr, encrypted_messages, '.write(db, indexes)')
-            t.end()
-          })
+          pull.values([raw_messages[0], raw_messages[1]]),
+          mInternalChain.write(settings, callback)
         )
-      })
-    )
+      },
+      function (callback) {
+        setTimeout(function () {
+          mInternalChain.writeOne(settings, raw_messages[2], callback)
+        }, 1000)
+      }
+    ], function (err) {
+      if (err) { throw err }
+      pull(
+        mChain.sequential(settings, settings.keys.public_key, 'holiday-carols:2014'),
+        pull.collect(function (err, arr) {
+          t.error(err)
+          t.deepEqual(arr, encrypted_messages, '.write(db, indexes)')
+          t.end()
+        })
+      )
+    })
   })
 
   test('sequential', function (t) {

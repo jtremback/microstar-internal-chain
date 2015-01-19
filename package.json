@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/jtremback/microstar-internal-chain",
   "dependencies": {
+    "async": "^0.9.0",
     "pull-stream": "^2.26.0"
   },
   "devDependencies": {
