@@ -31,19 +31,12 @@ module.exports = {
 // }
 
 // Formats messages and then writes them to db
-function write (settings, a, b) {
+function write (settings, callback) {
   var previous
-  var initial
-  var callback
-  if (typeof a === 'function') {
-    callback = a
-  } else {
-    initial = a
-    callback = b
-  }
+
   return pull(
     pull.asyncMap(function (message, callback) {
-      if (!previous && !initial) {
+      if (!previous) {
         // Get previous message from db
         llibrarian.readOne(settings, {
           k: ['public_key', 'chain_id', 'sequence'],
@@ -51,13 +44,13 @@ function write (settings, a, b) {
           peek: 'last'
         }, function (err, prev) {
           if (prev) { prev = prev.value }
-          format(settings, message, prev || initial, function (err, message) {
+          format(settings, message, prev, function (err, message) {
             previous = message
             callback(err, message)
           })
         })
       } else {
-        format(settings, message, previous || initial, function (err, message) {
+        format(settings, message, previous, function (err, message) {
           previous = message
           callback(err, message)
         })
@@ -68,46 +61,9 @@ function write (settings, a, b) {
   )
 }
 
-// function format (settings, message, prev, callback) {
-//   message = mMessage.createSequence(settings, message, prev)
-//   mMessage.createEnvelope(settings, message, prev, function (err, message) {
-//     prev = message
-//     return callback(err, message, prev)
-//   })
-// }
-
-// // Formats messages and then writes them to db
-// function write (settings, initial, callback) {
-//   var previous
-//   return pull(
-//     pull.asyncMap(function (message, callback) {
-//       if (!previous && !initial) {
-//         // Get previous message from db
-//         llibrarian.readOne(settings, {
-//           k: ['pub_key', 'chain_id', 'sequence'],
-//           v: [settings.keys.publicKey, message.chain_id],
-//           peek: 'last'
-//         }, function (err, last) {
-//           format(settings, message, last || initial, function (err, message, last) {
-//             previous = last
-//             callback(err, message)
-//           })
-//         })
-//       } else {
-//         format(settings, message, previous || initial, function (err, message, last) {
-//           previous = last
-//           callback(err, message)
-//         })
-//       }
-//     }),
-//     mChain.createDocs(settings),
-//     llibrarian.write(settings, callback)
-//   )
-// }
-
 function format (settings, message, prev, callback) {
-  message = mMessage.createSequence(settings, message, prev)
-  mCrypto.hash(message.chain_id + message.sequence, function (err, hash) {
+  // Add chain_id and message sequence together to get non-repeating nonce.
+  mCrypto.hash(message.chain_id + (prev ? prev.sequence + 1 : 0), function (err, hash) {
     if (err) { return callback(err) }
     // 24 byte nonce from a 32 char string? this is really fishy. fix later
     var nonce = hash.substring(0, 32)
@@ -127,21 +83,6 @@ function read (settings, query, callback) {
     mChain.read(settings, query, callback),
     decryptContent(settings)
   )
-}
-
-function encryptContent (settings) {
-  return pull.asyncMap(function (message, callback) {
-    mCrypto.hash(message.chain_id + message.sequence, function (err, hash) {
-      if (err) { return callback(err) }
-      // 24 byte nonce from a 32 char string? this is really fishy. fix later
-      var nonce = hash.substring(0, 32)
-
-      mCrypto.secretbox(JSON.stringify(message.content), nonce, settings.keys.secret_key, function (err, cipher) {
-        message.content = cipher
-        return callback(err, message)
-      })
-    })
-  })
 }
 
 function decryptContent (settings) {
