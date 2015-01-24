@@ -80,6 +80,7 @@ function format (settings, message, prev, callback) {
         var doc_enc = { key: hashed_enc, value: enveloped_enc }
 
         var batch = llibrarian.makeIndexDocs(doc_mixed, settings.indexes)
+        doc_enc.type = 'put'
         batch.push(doc_enc)
 
         return callback(err, batch, enveloped_enc)
@@ -103,9 +104,9 @@ function encryptContent (settings, message, prev, callback) {
   })
 }
 
-function read (settings, query, callback) {
+function read (settings, query) {
   return pull(
-    mChain.read(settings, query, callback),
+    mChain.read(settings, query),
     decryptContent(settings)
   )
 }
