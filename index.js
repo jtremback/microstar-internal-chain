@@ -96,6 +96,7 @@ function encryptContent (settings, message, prev, callback) {
     var nonce = hash.substring(0, 32)
 
     mCrypto.secretbox(JSON.stringify(message.content), nonce, settings.keys.secret_key, function (err, cipher) {
+      message = _.cloneDeep(message)
       message.content = cipher
       return callback(err, message)
     })
