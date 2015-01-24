@@ -5,6 +5,8 @@ var mMessage = require('../microstar-message')
 var mChain = require('../microstar-chain')
 var mCrypto = require('../microstar-crypto')
 var llibrarian = require('../level-librarian')
+var _ = require('lodash')
+var stringify = require('stable-stringify')
 
 module.exports = {
   write: write,
@@ -35,33 +37,37 @@ function write (settings, callback) {
   var previous
 
   return pull(
-    pull.asyncMap(function (message, callback) {
+    // mChain.createDocs(settings),
+    // llibrarian.addIndexDocs(settings.indexes),
+    pull.asyncMap(function (doc, callback) {
+      var key = doc.key
+      var message = doc.value
       if (!previous) {
         // Get previous message from db
         llibrarian.readOne(settings, {
           k: ['public_key', 'chain_id', 'sequence'],
-          v: [settings.keys.public_key, message.chain_id],
+          v: [settings.keys.public_key, message.value.chain_id],
           peek: 'last'
         }, function (err, prev) {
           if (prev) { prev = prev.value }
-          format(settings, message, prev, function (err, message) {
+          format(settings, message.value, prev, function (err, message) {
             previous = message
             callback(err, message)
           })
         })
       } else {
-        format(settings, message, previous, function (err, message) {
+        format(settings, message.value, previous, function (err, message) {
           previous = message
           callback(err, message)
         })
       }
-    }),
-    mChain.createDocs(settings),
-    llibrarian.write(settings, callback)
+    })
+    // pl.write(settings.db, settings.level_opts, callback)
+    // llibrarian.write(settings, callback)
   )
 }
 
-function format (settings, message, prev, callback) {
+function encryptContent (settings, message, prev, callback) {
   // Add chain_id and message sequence together to get non-repeating nonce.
   mCrypto.hash(message.chain_id + (prev ? prev.sequence + 1 : 0), function (err, hash) {
     if (err) { return callback(err) }
@@ -70,13 +76,56 @@ function format (settings, message, prev, callback) {
 
     mCrypto.secretbox(JSON.stringify(message.content), nonce, settings.keys.secret_key, function (err, cipher) {
       message.content = cipher
-      mMessage.createEnvelope(settings, message, prev, function (err, message) {
-        prev = message
-        return callback(err, message, prev)
+      return callback(err, message)
+    })
+  })
+}
+
+function createDoc (settings, message, callback) {
+  settings.crypto.hash(stringify(message), function (err, hashed) {
+    return callback(err, {
+      key: hashed,
+      value: message
+    })
+  })
+}
+
+function format (settings, message, prev, callback) {
+  encryptContent(settings, message, prev, function (err, message_enc) {
+    if (err) { return callback(err) }
+
+    mMessage.createEnvelope(settings, message_enc, prev, function (err, enveloped_enc) {
+      if (err) { return callback(err) }
+
+      settings.crypto.hash(stringify(enveloped_enc), function (err, hashed_enc) {
+        var enveloped_mixed = _.cloneDeep(enveloped_enc)
+        enveloped_mixed.content = message.content
+
+        var doc_mixed = { key: hashed_enc, value: enveloped_mixed }
+        var doc_enc = { key: hashed_enc, value: enveloped_enc }
+
+        return callback(err, llibrarian.makeIndexDocs(doc_mixed, settings.indexes))
       })
     })
   })
 }
+
+// function format (settings, message, prev, callback) {
+//   // Add chain_id and message sequence together to get non-repeating nonce.
+//   mCrypto.hash(message.chain_id + (prev ? prev.sequence + 1 : 0), function (err, hash) {
+//     if (err) { return callback(err) }
+//     // 24 byte nonce from a 32 char string? this is really fishy. fix later
+//     var nonce = hash.substring(0, 32)
+
+//     mCrypto.secretbox(JSON.stringify(message.content), nonce, settings.keys.secret_key, function (err, cipher) {
+//       message.content = cipher
+//       mMessage.createEnvelope(settings, message, prev, function (err, message) {
+//         prev = message
+//         return callback(err, message, prev)
+//       })
+//     })
+//   })
+// }
 
 function read (settings, query, callback) {
   return pull(

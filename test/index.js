@@ -4,7 +4,12 @@ var test = require('tape')
 var mInternalChain = require('../')
 var mChain = require('../../microstar-chain')
 var mCrypto = require('../../microstar-crypto')
-var level = require('level-test')()
+
+// var level = require('level-test')()
+var level = require('level')
+var rimraf = require('rimraf')
+rimraf.sync('./test.db')
+
 var pull = require('pull-stream')
 var async = require('async')
 
@@ -21,6 +26,8 @@ function tests (keys) {
     db: db1,
     indexes: mInternalChain.indexes
   }
+
+  settings.indexes.push(['public_key', 'chain_id', 'type', 'content[0]', 'sequence'])
 
   var raw_messages = [{
     content: 'Fa',
