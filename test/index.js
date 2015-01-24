@@ -5,15 +5,15 @@ var mInternalChain = require('../')
 var mChain = require('../../microstar-chain')
 var mCrypto = require('../../microstar-crypto')
 
-// var level = require('level-test')()
+var level = require('level-test')()
 var level = require('level')
-var rimraf = require('rimraf')
-rimraf.sync('./test.db')
+// var rimraf = require('rimraf')
+// rimraf.sync('./test.db')
 
 var pull = require('pull-stream')
 var async = require('async')
 
-var db1 = level('./test1.db', { valueEncoding: 'json' })
+var db = level('./test.db', { valueEncoding: 'json' })
 
 mCrypto.keys('h4dfDIR+i3JfCw1T2jKr/SS/PJttebGfMMGwBvhOzS4=', function (err, keys) {
   tests(keys)
@@ -23,7 +23,7 @@ function tests (keys) {
   var settings = {
     crypto: mCrypto,
     keys: keys,
-    db: db1,
+    db: db,
     indexes: mInternalChain.indexes
   }
 
