@@ -9,6 +9,8 @@ var _ = require('lodash')
 var pl = require('pull-level')
 var stringify = require('stable-stringify')
 
+// require('longjohn')
+
 module.exports = {
   write: write,
   writeOne: llibrarian.makeWriteOne(write),
@@ -18,7 +20,7 @@ module.exports = {
   copy: mChain.copy,
   format: mChain.format,
   validate: mChain.validate,
-  indexes: mChain.indexes
+  index_defs: mChain.index_defs
 }
 
 // settings = {
@@ -46,7 +48,6 @@ function write (settings, callback) {
           v: [settings.keys.public_key, message.chain_id],
           peek: 'last'
         }, function (err, prev) {
-          // console.log(JSON.stringify(settings, null, 2))
           if (prev) { prev = prev.value }
           format(settings, message, prev, function (err, batch, enveloped_enc) {
             previous = enveloped_enc
@@ -73,14 +74,19 @@ function format (settings, message, prev, callback) {
       if (err) { return callback(err) }
 
       settings.crypto.hash(stringify(enveloped_enc), function (err, hashed_enc) {
-        var enveloped_mixed = _.cloneDeep(enveloped_enc)
-        enveloped_mixed.content = message.content
-
-        var doc_mixed = { key: hashed_enc, value: enveloped_mixed }
+        // Fully encrypted document. This is what will be saved.
         var doc_enc = { key: hashed_enc, value: enveloped_enc }
-
-        var batch = llibrarian.makeIndexDocs(doc_mixed, settings.indexes)
         doc_enc.type = 'put'
+
+        // Document used to generate indexes. Has unencrypted content.
+        var doc_mixed = { key: hashed_enc, value: _.cloneDeep(enveloped_enc) }
+        doc_mixed.value.content = message.content
+
+        // Make index docs
+        var batch = Object.keys(settings.index_defs).map(function (key) {
+          return llibrarian.makeIndexDoc(doc_mixed, settings.index_defs[key])
+        })
+
         batch.push(doc_enc)
 
         return callback(err, batch, enveloped_enc)
@@ -117,7 +123,6 @@ function decryptContent (settings) {
       if (err) { return callback(err) }
       // 24 byte nonce from a 32 char string? this is really fishy. fix later
       var nonce = hash.substring(0, 32)
-
       mCrypto.secretbox.open(message.content, nonce, settings.keys.secret_key, function (err, content) {
         message.content = JSON.parse(content)
         return callback(err, message)

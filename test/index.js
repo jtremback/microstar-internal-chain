@@ -20,28 +20,51 @@ mCrypto.keys('h4dfDIR+i3JfCw1T2jKr/SS/PJttebGfMMGwBvhOzS4=', function (err, keys
   tests(keys)
 })
 
+var trace = require('get-trace')
+
+function tracify (t) {
+  function attach (func) {
+    return function () {
+      var args = []
+      for (var i = 0; i < arguments.length; i++) {
+        args.push(arguments[i])
+      }
+      args.push(trace(2))
+
+      return func.apply(null, args)
+    }
+  }
+  return {
+    equal: attach(t.equal),
+    deepEqual: attach(t.deepEqual),
+    error: attach(t.error),
+    end: t.end,
+    plan: t.plan
+  }
+}
+
 function tests (keys) {
   var settings = {
     crypto: mCrypto,
     keys: keys,
     db: db,
-    indexes: mInternalChain.indexes
+    index_defs: mInternalChain.index_defs
   }
 
-  settings.indexes.push(['public_key', 'chain_id', 'type', 'content', 'sequence'])
+  settings.index_defs.push(['public_key', 'chain_id', 'type', 'content', 'sequence'])
 
   var raw_messages = [{
-    content: 'Fa',
+    content: { a: 'Fa' },
     timestamp: 1418804138168,
     type: 'holiday-carols:syllable',
     chain_id: 'holiday-carols:2014'
   }, {
-    content: 'La',
+    content: { a: 'La' },
     timestamp: 1418804138169,
     type: 'holiday-carols:syllable',
     chain_id: 'holiday-carols:2014'
   }, {
-    content: 'Laa',
+    content: { a: 'Laa' },
     timestamp: 1418804138170,
     type: 'holiday-carols:syllable',
     chain_id: 'holiday-carols:2014'
@@ -76,93 +99,49 @@ function tests (keys) {
     type: 'holiday-carols:syllable'
   }]
 
-  var db_contents = [{
-    key: '7tnF9BOZCvP772uR1NWyLv9TQ2Z0T+32riey4gsoxu7U/dBVsrJfWSnrAH2A2WX6VKT1NEXmDow7V+WBS6rTFA==',
-    value: {
-      chain_id: 'holiday-carols:2014',
-      content: 'ADP1A0CFVa9sxCmeaUEW1SttYeA=',
-      previous: null,
-      public_key: 'N3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=',
-      sequence: 0,
-      signature: 'l5z5Wr6fx+zKyZ3u+3wpfJs9d+IPJjBcjmycP7I9+JLyjBew32W3sEph4rASqHOawGTw861P07/e3lbAuEsIAw==',
-      timestamp: 1418804138168,
-      type: 'holiday-carols:syllable'
-    }
-  }, {
-    key: 'CIu7YG77MOSBCxfHWHKfhROwH77u4D4nWBOXoDnJZXz0X/Ne9QQursF92vr200byapCHclPawEOPFRyvH45mqw==',
-    value: {
-      chain_id: 'holiday-carols:2014',
-      content: 'NIRugXxD2RdLC5pZxGgQUjROOt4=',
-      previous: '7tnF9BOZCvP772uR1NWyLv9TQ2Z0T+32riey4gsoxu7U/dBVsrJfWSnrAH2A2WX6VKT1NEXmDow7V+WBS6rTFA==',
-      public_key: 'N3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=',
-      sequence: 1,
-      signature: 'UVbFCY/La8WA45gsfiEQHPH9LhVQguj+7c3Ryhmh9DBpxshiEfWJxzksWZqV5dUBuVNgvseCkONeij+O/2p4Ag==',
-      timestamp: 1418804138169,
-      type: 'holiday-carols:syllable'
-    }
-  }, {
-    key: 'XbOhnwnH1Ns1mgyeinl+fq95Cjb+D92S+bnoq3cf9HYIveyGYMCGFjDezHPtVriVShShmgvTl8+HqApgwym3yA==',
-    value: {
-      chain_id: 'holiday-carols:2014',
-      content: 'jUz99DHe7OGdSD1kcLIXB6xPoN4s',
-      previous: 'CIu7YG77MOSBCxfHWHKfhROwH77u4D4nWBOXoDnJZXz0X/Ne9QQursF92vr200byapCHclPawEOPFRyvH45mqw==',
-      public_key: 'N3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=',
-      sequence: 2,
-      signature: 'FPxqA5KBQmRfC3ARQYRvzPHGqeRB18jOLHJuSWFUC0PY5x/cDBHPkEZDs7bo4G3/xbaD25y//G7G4G4IKSPLBg==',
-      timestamp: 1418804138170,
-      type: 'holiday-carols:syllable'
-    }
-  }, {
-    key: 'ÿiÿpublic_key,chain_id,sequenceÿN3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=ÿholiday-carols:2014ÿ0ÿ7tnF9BOZCvP772uR1NWyLv9TQ2Z0T+32riey4gsoxu7U/dBVsrJfWSnrAH2A2WX6VKT1NEXmDow7V+WBS6rTFA==ÿ',
-    value: '7tnF9BOZCvP772uR1NWyLv9TQ2Z0T+32riey4gsoxu7U/dBVsrJfWSnrAH2A2WX6VKT1NEXmDow7V+WBS6rTFA=='
-  }, {
-    key: 'ÿiÿpublic_key,chain_id,sequenceÿN3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=ÿholiday-carols:2014ÿ1ÿCIu7YG77MOSBCxfHWHKfhROwH77u4D4nWBOXoDnJZXz0X/Ne9QQursF92vr200byapCHclPawEOPFRyvH45mqw==ÿ',
-    value: 'CIu7YG77MOSBCxfHWHKfhROwH77u4D4nWBOXoDnJZXz0X/Ne9QQursF92vr200byapCHclPawEOPFRyvH45mqw=='
-  }, {
-    key: 'ÿiÿpublic_key,chain_id,sequenceÿN3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=ÿholiday-carols:2014ÿ2ÿXbOhnwnH1Ns1mgyeinl+fq95Cjb+D92S+bnoq3cf9HYIveyGYMCGFjDezHPtVriVShShmgvTl8+HqApgwym3yA==ÿ',
-    value: 'XbOhnwnH1Ns1mgyeinl+fq95Cjb+D92S+bnoq3cf9HYIveyGYMCGFjDezHPtVriVShShmgvTl8+HqApgwym3yA=='
-  }, {
-    key: 'ÿiÿpublic_key,chain_id,type,content,sequenceÿN3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=ÿholiday-carols:2014ÿholiday-carols:syllableÿFaÿ0ÿ7tnF9BOZCvP772uR1NWyLv9TQ2Z0T+32riey4gsoxu7U/dBVsrJfWSnrAH2A2WX6VKT1NEXmDow7V+WBS6rTFA==ÿ',
-    value: '7tnF9BOZCvP772uR1NWyLv9TQ2Z0T+32riey4gsoxu7U/dBVsrJfWSnrAH2A2WX6VKT1NEXmDow7V+WBS6rTFA=='
-  }, {
-    key: 'ÿiÿpublic_key,chain_id,type,content,sequenceÿN3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=ÿholiday-carols:2014ÿholiday-carols:syllableÿLaaÿ2ÿXbOhnwnH1Ns1mgyeinl+fq95Cjb+D92S+bnoq3cf9HYIveyGYMCGFjDezHPtVriVShShmgvTl8+HqApgwym3yA==ÿ',
-    value: 'XbOhnwnH1Ns1mgyeinl+fq95Cjb+D92S+bnoq3cf9HYIveyGYMCGFjDezHPtVriVShShmgvTl8+HqApgwym3yA=='
-  }, {
-    key: 'ÿiÿpublic_key,chain_id,type,content,sequenceÿN3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=ÿholiday-carols:2014ÿholiday-carols:syllableÿLaÿ1ÿCIu7YG77MOSBCxfHWHKfhROwH77u4D4nWBOXoDnJZXz0X/Ne9QQursF92vr200byapCHclPawEOPFRyvH45mqw==ÿ',
-    value: 'CIu7YG77MOSBCxfHWHKfhROwH77u4D4nWBOXoDnJZXz0X/Ne9QQursF92vr200byapCHclPawEOPFRyvH45mqw=='
-  }]
-
   var decrypted_messages = [{
     chain_id: 'holiday-carols:2014',
-    content: 'Fa',
+    content: {
+      a: 'Fa'
+    },
     previous: null,
     public_key: 'N3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=',
     sequence: 0,
-    signature: 'l5z5Wr6fx+zKyZ3u+3wpfJs9d+IPJjBcjmycP7I9+JLyjBew32W3sEph4rASqHOawGTw861P07/e3lbAuEsIAw==',
+    signature: '4t+EbLz3Rzit3m3hHMGfVGiNsfExEx0+fwTsUU2J5n6rxBgTBXf9QHAt6NieSBtTscRXM5vpn40yOJfG64lbCA==',
     timestamp: 1418804138168,
     type: 'holiday-carols:syllable'
   }, {
     chain_id: 'holiday-carols:2014',
-    content: 'La',
-    previous: '7tnF9BOZCvP772uR1NWyLv9TQ2Z0T+32riey4gsoxu7U/dBVsrJfWSnrAH2A2WX6VKT1NEXmDow7V+WBS6rTFA==',
+    content: {
+      a: 'La'
+    },
+    previous: 'c+I3xyPsmezInk3BNVA6r/U700Nqa79LGeAWKCM17sklMP7EHGCMxo2s0mqB882jc5ooAbLlduGKiskGZ7PoXQ==',
     public_key: 'N3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=',
     sequence: 1,
-    signature: 'UVbFCY/La8WA45gsfiEQHPH9LhVQguj+7c3Ryhmh9DBpxshiEfWJxzksWZqV5dUBuVNgvseCkONeij+O/2p4Ag==',
+    signature: 'AQ9qH0aIlLcfwYdLGnStKe/aPgJBe8NydopnTzgg+769D1gVAuQZh1sBR1hHgT+jdlQR4HviOiMv+ml05FgiBw==',
     timestamp: 1418804138169,
     type: 'holiday-carols:syllable'
   }, {
     chain_id: 'holiday-carols:2014',
-    content: 'Laa',
-    previous: 'CIu7YG77MOSBCxfHWHKfhROwH77u4D4nWBOXoDnJZXz0X/Ne9QQursF92vr200byapCHclPawEOPFRyvH45mqw==',
+    content: {
+      a: 'Laa'
+    },
+    previous: 'BsePBkEiboTsqOFBHs7xUUP8ZRWitj16b72aZLU65tR00T10hfkcG+lEH5VObLEaTblfsmyGioH1gcbG5gd0+Q==',
     public_key: 'N3DyaY1o1EmjPLUkRQRu41/g/xKe/CR/cCmatA78+zY=7XuCMMWN3y/r6DeVk7YGY8j/0rWyKm3TNv3S2cbmXKk=',
     sequence: 2,
-    signature: 'FPxqA5KBQmRfC3ARQYRvzPHGqeRB18jOLHJuSWFUC0PY5x/cDBHPkEZDs7bo4G3/xbaD25y//G7G4G4IKSPLBg==',
+    signature: 'z8fxE9v63X0ohY2HlpVSbM6JYumO2YToFoe84X+5K2Fw2POU13cH84MGvSiZwRh+9pcKdrvW3XbliCGxfrZXBg==',
     timestamp: 1418804138170,
     type: 'holiday-carols:syllable'
   }]
 
 
+
+  function sha1hex (input) {
+    return require('crypto').createHash('sha1').update(JSON.stringify(input)).digest('hex')
+  }
+
   test('write', function (t) {
+    t = tracify(t)
     t.plan(1)
 
     async.series([
@@ -183,7 +162,7 @@ function tests (keys) {
         pl.read(db),
         pull.collect(function (err, arr) {
           if (err) { throw err }
-          t.deepEqual(arr, db_contents, '.write(db, indexes)')
+          t.deepEqual(sha1hex(arr), '20c38295e6ed83380ca61a97539908b1bf5b6070')
           t.end()
         })
       )
@@ -191,13 +170,14 @@ function tests (keys) {
   })
 
   test('sequential', function (t) {
+    t = tracify(t)
     t.plan(2)
 
     pull(
       mInternalChain.sequential(settings, settings.keys.public_key, 'holiday-carols:2014'),
       pull.collect(function (err, arr) {
         if (err) { throw err }
-        t.deepEqual(arr, [decrypted_messages[0], decrypted_messages[1], decrypted_messages[2]], 'Sequential without supplied sequence')
+        t.deepEqual(arr, [decrypted_messages[0], decrypted_messages[1], decrypted_messages[2]])
       })
     )
 
@@ -205,12 +185,14 @@ function tests (keys) {
       mInternalChain.sequential(settings, settings.keys.public_key, 'holiday-carols:2014', 1),
       pull.collect(function (err, arr) {
         if (err) { throw err }
-        t.deepEqual(arr, [decrypted_messages[1], decrypted_messages[2]], 'Sequential with supplied sequence')
+        // Sequential with supplied sequence
+        t.deepEqual(arr, [decrypted_messages[1], decrypted_messages[2]])
       })
     )
   })
 
   test('validate', function (t) {
+    t = tracify(t)
     t.plan(2)
 
     pull(
@@ -218,7 +200,8 @@ function tests (keys) {
       mInternalChain.validate(settings, encrypted_messages[0]),
       pull.collect(function (err, arr) {
         if (err) { throw err }
-        t.deepEqual(arr, [encrypted_messages[1], encrypted_messages[2]], 'Partial chain with supplied initial message.')
+        // Partial chain with supplied initial message.
+        t.deepEqual(arr, [encrypted_messages[1], encrypted_messages[2]])
       })
     )
 
@@ -227,7 +210,8 @@ function tests (keys) {
       mInternalChain.validate(settings),
       pull.collect(function (err, arr) {
         if (err) { throw err }
-        t.deepEqual(arr, [encrypted_messages[0], encrypted_messages[1], encrypted_messages[2]], 'Partial chain without supplied initial message.')
+        // Partial chain without supplied initial message.
+        t.deepEqual(arr, [encrypted_messages[0], encrypted_messages[1], encrypted_messages[2]])
       })
     )
   })
