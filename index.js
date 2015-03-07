@@ -9,8 +9,6 @@ var _ = require('lodash')
 var pl = require('pull-level')
 var stringify = require('stable-stringify')
 
-// require('longjohn')
-
 module.exports = {
   write: write,
   writeOne: llibrarian.makeWriteOne(write),
