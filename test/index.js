@@ -190,29 +190,4 @@ function tests (keys) {
       })
     )
   })
-
-  test('validate', function (t) {
-    t = tracify(t)
-    t.plan(2)
-
-    pull(
-      pull.values([encrypted_messages[1], encrypted_messages[2]]),
-      mInternalChain.validate(settings, encrypted_messages[0]),
-      pull.collect(function (err, arr) {
-        if (err) { throw err }
-        // Partial chain with supplied initial message.
-        t.deepEqual(arr, [encrypted_messages[1], encrypted_messages[2]])
-      })
-    )
-
-    pull(
-      pull.values([encrypted_messages[0], encrypted_messages[1], encrypted_messages[2]]),
-      mInternalChain.validate(settings),
-      pull.collect(function (err, arr) {
-        if (err) { throw err }
-        // Partial chain without supplied initial message.
-        t.deepEqual(arr, [encrypted_messages[0], encrypted_messages[1], encrypted_messages[2]])
-      })
-    )
-  })
 }

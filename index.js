@@ -16,8 +16,7 @@ module.exports = {
   readOne: llibrarian.makeReadOne(read),
   sequential: sequential,
   copy: mChain.copy,
-  format: mChain.format,
-  validate: mChain.validate,
+  format: format,
   index_defs: mChain.index_defs
 }
 
@@ -26,7 +25,7 @@ module.exports = {
 //   keys: JS,
 //   db: db
 // }
-//
+
 // message = {
 //   content: JSON,
 //   type: String,
@@ -111,20 +110,20 @@ function encryptContent (settings, message, prev, callback) {
 function read (settings, query) {
   return pull(
     mChain.read(settings, query),
-    decryptContent(settings)
+    pull.asyncMap(function (message, callback) {
+      decryptContent(settings, message, callback)
+    })
   )
 }
 
-function decryptContent (settings) {
-  return pull.asyncMap(function (message, callback) {
-    mCrypto.hash(message.chain_id + message.sequence, function (err, hash) {
-      if (err) { return callback(err) }
-      // 24 byte nonce from a 32 char string? this is really fishy. fix later
-      var nonce = hash.substring(0, 32)
-      mCrypto.secretbox.open(message.content, nonce, settings.keys.secret_key, function (err, content) {
-        message.content = JSON.parse(content)
-        return callback(err, message)
-      })
+function decryptContent (settings, message, callback) {
+  mCrypto.hash(message.chain_id + message.sequence, function (err, hash) {
+    if (err) { return callback(err) }
+    // 24 byte nonce from a 32 char string? this is really fishy. fix later
+    var nonce = hash.substring(0, 32)
+    mCrypto.secretbox.open(message.content, nonce, settings.keys.secret_key, function (err, content) {
+      message.content = JSON.parse(content)
+      return callback(err, message)
     })
   })
 }
@@ -132,6 +131,8 @@ function decryptContent (settings) {
 function sequential (settings, public_key, chain_id, sequence) {
   return pull(
     mChain.sequential(settings, public_key, chain_id, sequence),
-    decryptContent(settings)
+    pull.asyncMap(function (message, callback) {
+      decryptContent(settings, message, callback)
+    })
   )
 }
