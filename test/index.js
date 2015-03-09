@@ -162,7 +162,7 @@ function tests (keys) {
         pl.read(db),
         pull.collect(function (err, arr) {
           if (err) { throw err }
-          t.deepEqual(sha1hex(arr), '20c38295e6ed83380ca61a97539908b1bf5b6070')
+          t.deepEqual(sha1hex(arr), '8273b4e84768663c881d521549a52e3041fc388e')
           t.end()
         })
       )
